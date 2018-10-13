@@ -91,7 +91,7 @@ class MLP():
 
 	#Função que prevê
 	def testApx(self, examples, auxInput):
-		file = open("aprox/t3/resultado_10000_pto8_pto6.txt", "w")
+		#file = open("aprox/t3/resultado_10000_pto8_pto6.txt", "w")
 		file.write(str("Erro quadrático: ").rstrip('\n'))
 		file.write(str(auxInput))
 		file.write("\n\n")
@@ -104,16 +104,17 @@ class MLP():
 			print("Esperado: ", p[1])
 			print("Obtidao: ", np.asarray(out))
 			print("Acur: ", np.asarray(out)/p[1], "\n")
-
+			
+			"""
 			file.write(str("Esperado: ").rstrip('\n'))
 			file.write(str(np.asarray(p[1])))
 			file.write(str(" Obtido: ").rstrip('\n'))
 			file.write(str(np.asarray(out)))
-			file.write("\n\n")
+			file.write("\n\n")"""
 
 	#Função que prevê
 	def testWine(self, examples, normaOut):
-		file = open("testes/t3/resultado_5000_pto8_pto6.txt", "w")
+		#file = open("testes/t3/resultado_5000_pto8_pto6.txt", "w")
 		accur = 0
 
 		for p in examples:
@@ -130,14 +131,15 @@ class MLP():
 			else:
 				print("Acur: ", out.max()/np.asarray(p[1]).max(), "\n")
 				accur = out.max()/np.asarray(p[1]).max()
-
+			
+			"""
 			file.write(str("Esperado: ").rstrip('\n'))
 			file.write(str(np.asarray(p[1]).max()))
 			file.write(str(" Obtido: ").rstrip('\n'))
 			file.write(str(out.max()))
 			file.write(str(" Accuracia: ").rstrip('\n'))
 			file.write(str(accur))
-			file.write("\n\n")
+			file.write("\n\n")"""
 
 
 	def readWine_testAll(self):
@@ -275,6 +277,43 @@ class MLP():
 		
 		return z, biggerLat, biggerLong
 
+	def trainXOR(self, x, learnigRate, momentum, itDefined, threshold = 1e-3):
+		gradError = []
+		gradErrorWhile = 1
+		it = 0
+
+		#while(it < itDefined):
+		while(gradErrorWhile > threshold):
+			for p in x:
+				expected = np.matrix(p[1])
+				inputs = np.matrix(p[0])
+
+				#fast foward
+				output = self.ff(inputs)
+				#Erro quadrado
+				gradError = (np.power((expected - output), 2))
+				gradErrorWhile = np.max(np.asarray(gradError[:]))
+				error = (expected - output)
+
+				#Deltas
+				delta_output_layer = np.asmatrix(self.dsigmoide(output))
+				delta_hidden_layer = self.dsigmoide(np.asarray(self.hiddenlayer_activations))
+				d_out = (-1)*np.asarray(error)*np.asarray(delta_output_layer)
+				error_hiddenLayer = np.dot(d_out, np.transpose(self.wout))
+				d_hiddenLayer = np.asarray(error_hiddenLayer)*np.asarray(delta_hidden_layer)
+
+				#Atualização dos pesos
+				self.wout = self.wout - momentum *np.dot(np.transpose(self.hiddenlayer_activations), d_out)*learnigRate
+				self.wh = self.wh - momentum*np.dot(np.transpose(inputs), d_hiddenLayer)*learnigRate
+
+			it += 1
+			if(it % 500 == 0):
+				print("erro quad: ", gradError)
+
+		print("erro quad: ", gradError)
+		print("total it: ", it)
+		return gradError
+
 
 if __name__ == '__main__':
 	trainFile2 = "testes/t2/wine2.txt"
@@ -384,50 +423,15 @@ if __name__ == '__main__':
 			else:
 				print("Opção inválida")
 		else:
-			print("Digite uma opção válida")
-
-
-
-"""
-	print("Iniciando a rede... \n")
-	nn = MLP(68, 45, 2)
-
-	trainFile2 = "testes/t2/wine2.txt"
-	testFile2 = "testes/t2/teste2.txt"
-	
-	trainFile1 = "testes/t1/wine1.txt"
-	testFile1 = "testes/t1/teste1.txt"
-
-	trainFileMusic = "aprox/t1/tracks.txt"
-	testFileMusic = "aprox/t1/test.txt"
-
-	trainFileMusic2 = "aprox/t2/tracks.txt"
-	testFileMusic2= "aprox/t2/test.txt"
-
-	trainFileMusic3 = "aprox/t3/tracks.txt"
-	testFileMusic3 = "aprox/t3/test.txt"
-
-	normaVec = []
-	z, normaOutLat, normaOutLong = nn.aprox(trainFileMusic)
-	z2, normaOutLat2, normaOutLong2 = nn.aprox(testFileMusic)
-	normaVec.append(normaOutLat)
-	normaVec.append(normaOutLong)
-	#z2 = nn.aprox()
-	print("Treinando a rede...\n")
-	nn.train(z)	
-	print("Testando a rede...\n")
-	nn.test(z2, normaOutLong2)
-
-	Exemplo da porta XOR
-	x = [
-		[[1, 0], [1]],
-		[[0, 0], [0]],
-		[[0, 1], [1]],
-		[[1, 1], [0]]
-	]
-	print("Iniciando a rede... \n")
-	nn = MLP(2, 2, 1)
-	print("Treinando a rede...\n")
-	nn.train(x)
-	print("Classificando o exemplo...\n")
-	nn.test()"""
+			x = [
+				[[1, 0], [1]],
+				[[0, 0], [0]],
+				[[0, 1], [1]],
+				[[1, 1], [0]]
+			]
+			print("Iniciando a rede... \n")
+			nn = MLP(2, 2, 1)
+			print("Treinando a rede...\n")
+			nn.trainXOR(x, lr, mm, epo)
+			print("Classificando o exemplo...\n")
+			nn.testWine(x, 1)
